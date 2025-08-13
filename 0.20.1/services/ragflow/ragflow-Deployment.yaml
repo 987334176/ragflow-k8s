@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose -f docker-compose-merged.yml convert
+    kompose.version: 1.35.0 (9532ceef3)
+  labels:
+    io.kompose.service: ragflow
+  name: ragflow
+  namespace: ragflow
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      io.kompose.service: ragflow
+  template:
+    metadata:
+      labels:
+        io.kompose.service: ragflow
+    spec:
+      restartPolicy: Always
+      containers:
+        - envFrom:
+            - configMapRef:
+                name: ragflow-config
+          env:
+            - name: HF_ENDPOINT
+              value: "$(HF_ENDPOINT)"
+            - name: MACOS
+              value: "$(MACOS)"
+            - name: TZ
+              value: Asia/Shanghai
+          image: infiniflow/ragflow:v0.20.1-slim
+          imagePullPolicy: IfNotPresent
+          name: ragflow-server
+          ports:
+            - containerPort: 9380
+              protocol: TCP
+            - containerPort: 80
+              protocol: TCP
+            - containerPort: 443
+              protocol: TCP
+            - containerPort: 5678
+              protocol: TCP
+            - containerPort: 5679
+              protocol: TCP
+            - containerPort: 9382
+              protocol: TCP
+          resources:
+            limits:
+              cpu: 300m
+              memory: 2560Mi
+            requests:
+              cpu: 100m
+              memory: 1Gi
+          volumeMounts:
+            - mountPath: /ragflow/logs
+              name: ragflow-claim0
+              subPath: ragflow/volumes/ragflow/logs
+            - mountPath: /etc/nginx/conf.d/ragflow.conf
+              name: ragflow-cm1
+              subPath: ragflow.conf
+            - mountPath: /etc/nginx/proxy.conf
+              name: ragflow-cm2
+              subPath: proxy.conf
+            - mountPath: /etc/nginx/nginx.conf
+              name: ragflow-cm3
+              subPath: nginx.conf
+            - mountPath: /ragflow/conf/service_conf.yaml.template
+              name: ragflow-cm5
+              subPath: service_conf.yaml.template
+      volumes:
+        - name: ragflow-claim0
+          persistentVolumeClaim:
+            claimName: ragflow-pvc
+        - configMap:
+            items:
+              - key: ragflow.conf
+                path: ragflow.conf
+            name: ragflow-cm1
+          name: ragflow-cm1
+        - configMap:
+            items:
+              - key: proxy.conf
+                path: proxy.conf
+            name: ragflow-cm2
+          name: ragflow-cm2
+        - configMap:
+            items:
+              - key: nginx.conf
+                path: nginx.conf
+            name: ragflow-cm3
+          name: ragflow-cm3
+        - name: ragflow-claim4
+          persistentVolumeClaim:
+            claimName: ragflow-pvc
+        - configMap:
+            items:
+              - key: service_conf.yaml.template
+                path: service_conf.yaml.template
+            name: ragflow-cm5
+          name: ragflow-cm5
