@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kompose.cmd: kompose -f docker-compose-merged.yml convert
+    kompose.version: 1.35.0 (9532ceef3)
+  labels:
+    io.kompose.service: ragflow
+  name: ragflow
+  namespace: ragflow
+spec:
+  type: NodePort
+  ports:
+    - name: "9380"
+      port: 9380
+      targetPort: 9380
+    - name: "9381"
+      port: 9381
+      targetPort: 9381
+    - name: "80"
+      port: 80
+      targetPort: 80
+    - name: "443"
+      port: 443
+      targetPort: 443
+    - name: "5678"
+      port: 5678
+      targetPort: 5678
+    - name: "5679"
+      port: 5679
+      targetPort: 5679
+    - name: "9382"
+      port: 9382
+      targetPort: 9382
+  selector:
+    io.kompose.service: ragflow
